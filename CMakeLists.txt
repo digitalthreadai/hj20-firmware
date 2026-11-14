@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(hj20_firmware
-    VERSION 0.2.0
+    VERSION 0.2.1
     DESCRIPTION "HJ-20 cobot wrist joint actuator firmware"
     LANGUAGES C)
 

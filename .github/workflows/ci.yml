@@ -4,7 +4,8 @@
 #   artifact `junit-results`  -> junit.xml (single file; test names carry SRS ids)
 #   artifact `hj20-firmware`  -> .elf / .bin / .map for the STM32G474RE
 #   artifact `sbom-spdx`      -> SPDX 2.3 JSON (+ dependency-graph submission)
-# Tags v* additionally publish a GitHub Release with the .bin, .elf and SBOM.
+# Tags v* additionally publish a GitHub Release with the .bin, .elf, SBOM and
+# the JUnit test report.
 #
 # Keep artifact names stable: the PLM picks the test report by name
 # (/junit|test|results/i), so no other artifact may match that pattern.
@@ -161,6 +162,13 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: sbom-spdx
+          path: dist
+
+      # The test report rides on the release so it stays publicly readable
+      # after the run's artifacts expire.
+      - uses: actions/download-artifact@v4
+        with:
+          name: junit-results
           path: dist
 
       - name: Release notes from CHANGELOG.md

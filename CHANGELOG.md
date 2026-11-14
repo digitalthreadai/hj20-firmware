@@ -7,6 +7,13 @@ requirements specification (see `tests/requirements-map.md`).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-14
+
+### Changed
+- Releases now carry the JUnit test report (`junit.xml`) next to the image
+  and the SBOM, so the evidence for a release outlives the CI artifacts.
+  No functional change to the firmware.
+
 ## [0.2.0] - 2026-11-14
 
 ### Added
