@@ -5,6 +5,8 @@ add_executable(hj20_tests
     test_torque.c
     test_encoder.c
     test_fault.c
+    test_can.c
+    test_control.c
 )
 target_link_libraries(hj20_tests PRIVATE hj20_core m)
 target_include_directories(hj20_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

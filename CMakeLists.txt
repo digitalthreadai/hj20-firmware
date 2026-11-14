@@ -27,6 +27,8 @@ add_library(hj20_core STATIC
     src/torque.c
     src/encoder.c
     src/fault.c
+    src/can_proto.c
+    src/control.c
 )
 target_include_directories(hj20_core PUBLIC src)
 target_compile_definitions(hj20_core PUBLIC
