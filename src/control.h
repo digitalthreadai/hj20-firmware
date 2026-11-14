@@ -53,6 +53,8 @@ typedef struct {
     hj20_derate_t derate;
 
     /* command (from CAN) */
+    uint32_t last_cmd_ms;     /* slow-loop time of the last valid COMMAND */
+    uint16_t reported_faults; /* bits already announced in a FAULT frame  */
     hj20_mode_t mode;
     uint8_t last_seq;
     float setpoint;          /* SI: Nm | rad/s | rad */
@@ -76,5 +78,11 @@ void hj20_ctrl_slow_tick(hj20_ctrl_t *c, const hj20_slow_inputs_t *in);
 hj20_can_status_t hj20_ctrl_on_can(hj20_ctrl_t *c, const hj20_can_frame_t *f);
 
 void hj20_ctrl_build_telemetry(const hj20_ctrl_t *c, hj20_can_frame_t *f);
+
+/**
+ * If faults were latched since the last call, build the FAULT frame and
+ * return true (send it immediately). Each latch event is reported once.
+ */
+bool hj20_ctrl_take_fault_event(hj20_ctrl_t *c, hj20_can_frame_t *f);
 
 #endif /* HJ20_CONTROL_H */

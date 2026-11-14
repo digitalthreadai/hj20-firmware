@@ -66,4 +66,7 @@
 #define HJ20_UV_DEBOUNCE              10
 #define HJ20_OT_DEBOUNCE              50
 
+/* ---- host link ------------------------------------------------------------ */
+#define HJ20_CAN_CMD_TIMEOUT_MS       100u     /* no COMMAND while enabled -> stop */
+
 #endif /* HJ20_CONFIG_H */

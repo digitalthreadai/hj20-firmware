@@ -161,3 +161,29 @@ hj20_can_status_t hj20_can_decode_telemetry(uint8_t node, const hj20_can_frame_t
     t->fw_patch = f->data[30];
     return HJ20_CAN_OK;
 }
+
+/* ---- fault event -------------------------------------------------------- */
+
+void hj20_can_encode_fault(uint8_t node, const hj20_fault_frame_t *e, hj20_can_frame_t *f)
+{
+    f->id = HJ20_CAN_ID_FAULT_BASE + node;
+    f->len = HJ20_CAN_FAULT_LEN;
+    zero(f->data, sizeof f->data);
+    put_u16(&f->data[0], e->latched);
+    put_u16(&f->data[2], e->first);
+    put_u32(&f->data[4], e->time_ms);
+}
+
+hj20_can_status_t hj20_can_decode_fault(uint8_t node, const hj20_can_frame_t *f, hj20_fault_frame_t *e)
+{
+    if (f->id != HJ20_CAN_ID_FAULT_BASE + node) {
+        return HJ20_CAN_ERR_ID;
+    }
+    if (f->len < HJ20_CAN_FAULT_LEN) {
+        return HJ20_CAN_ERR_LEN;
+    }
+    e->latched = get_u16(&f->data[0]);
+    e->first = get_u16(&f->data[2]);
+    e->time_ms = get_u32(&f->data[4]);
+    return HJ20_CAN_OK;
+}

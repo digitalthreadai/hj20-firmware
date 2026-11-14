@@ -31,6 +31,8 @@ void hj20_ctrl_init(hj20_ctrl_t *c, uint8_t node_id, float elec_offset_rad)
     hj20_pi_init(&c->pi_q, CUR_KP_V_PER_A, CUR_KI_V_PER_A_S, -vmax, vmax);
 
     c->mode = HJ20_MODE_DISABLE;
+    c->last_cmd_ms = 0;
+    c->reported_faults = 0;
     c->last_seq = 0;
     c->setpoint = 0.0f;
     c->torque_ff_nm = 0.0f;
@@ -96,6 +98,12 @@ void hj20_ctrl_slow_tick(hj20_ctrl_t *c, const hj20_slow_inputs_t *in)
     };
     hj20_fault_evaluate(&c->fault, &fi);
 
+    /* Host-link watchdog: an enabled joint must keep receiving commands. */
+    if (hj20_fault_pwm_allowed(&c->fault) &&
+        (uint32_t)(c->now_ms - c->last_cmd_ms) > HJ20_CAN_CMD_TIMEOUT_MS) {
+        hj20_fault_raise(&c->fault, HJ20_FAULT_CAN_TIMEOUT);
+    }
+
     /* Account for the torque applied over the last tick (zero when off),
      * so the peak budget also recovers while the drive is disabled. */
     c->torque_limit_eff = hj20_derate_limit(&c->derate, c->torque_limit_nm, c->torque_cmd_nm,
@@ -140,6 +148,7 @@ hj20_can_status_t hj20_ctrl_on_can(hj20_ctrl_t *c, const hj20_can_frame_t *f)
         return st;
     }
     c->last_seq = cmd.seq;
+    c->last_cmd_ms = c->now_ms;
 
     switch (cmd.mode) {
     case HJ20_MODE_DISABLE:
@@ -174,6 +183,22 @@ hj20_can_status_t hj20_ctrl_on_can(hj20_ctrl_t *c, const hj20_can_frame_t *f)
                              : (float)cmd.torque_limit_mnm * 1e-3f;
     (void)hj20_fault_request_enable(&c->fault);
     return HJ20_CAN_OK;
+}
+
+bool hj20_ctrl_take_fault_event(hj20_ctrl_t *c, hj20_can_frame_t *f)
+{
+    uint16_t latched = c->fault.latched;
+    if (latched == 0u) {
+        c->reported_faults = 0;     /* cleared: the next event is new */
+        return false;
+    }
+    if ((latched & (uint16_t)~c->reported_faults) == 0u) {
+        return false;
+    }
+    hj20_fault_frame_t e = {latched, c->fault.first, c->now_ms};
+    hj20_can_encode_fault(c->node_id, &e, f);
+    c->reported_faults = latched;
+    return true;
 }
 
 static int32_t round_i32(float x)

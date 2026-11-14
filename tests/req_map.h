@@ -40,6 +40,8 @@
 /* CAN-FD interface */
 #define REQ_CAN_COMMAND     "SRS_130"  /* command frame decode + range validation       */
 #define REQ_CAN_TELEMETRY   "SRS_131"  /* telemetry frame content and encoding          */
+#define REQ_CAN_FAULT_FRAME "SRS_132"  /* FAULT frame on every new latched fault        */
+#define REQ_CAN_TIMEOUT     "SRS_133"  /* torque off after 100 ms without a command     */
 
 #define TEST_NAME(req, what) "test_" req "_" what
 

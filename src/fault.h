@@ -34,6 +34,7 @@ typedef enum {
     HJ20_FAULT_OVER_TEMP_MOTOR = 1u << 4,
     HJ20_FAULT_ENCODER_MISMATCH = 1u << 5,
     HJ20_FAULT_GATE_DRIVER = 1u << 6,   /* DRV8353RS nFAULT asserted */
+    HJ20_FAULT_CAN_TIMEOUT = 1u << 7,   /* host stopped commanding    */
 } hj20_fault_bit_t;
 
 typedef struct {

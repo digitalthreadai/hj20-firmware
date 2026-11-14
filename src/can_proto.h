@@ -5,11 +5,13 @@
  * ID map (node = joint address 1..15, set by strap/NVM):
  *
  *   ID              Dir          Len  Content
+ *   0x080 + node    joint->host   8   FAULT     latched bits, first fault, time
  *   0x100 + node    host->joint  16   COMMAND   mode, seq, setpoint, ff, limit
  *   0x180 + node    joint->host  32   TELEMETRY state, faults, pos, vel, torque...
  *
  * Bit rates: 1 Mbit/s arbitration, 5 Mbit/s data (BRS on). Lower IDs win
- * arbitration, so commands always pre-empt telemetry.
+ * arbitration: fault frames pre-empt commands, commands pre-empt telemetry.
+ * The FAULT frame is 8 bytes so classic-CAN monitoring tools can read it.
  *
  * Units on the wire are integers: torque mNm, velocity mrad/s, position urad,
  * voltage mV, temperature 0.1 degC, current mA.
@@ -20,12 +22,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define HJ20_CAN_ID_FAULT_BASE  0x080u
 #define HJ20_CAN_ID_CMD_BASE    0x100u
 #define HJ20_CAN_ID_TELEM_BASE  0x180u
 #define HJ20_CAN_NODE_MAX       15u
 
 #define HJ20_CAN_CMD_LEN        16u
 #define HJ20_CAN_TELEM_LEN      32u
+#define HJ20_CAN_FAULT_LEN      8u
 
 typedef struct {
     uint32_t id;
@@ -64,6 +68,12 @@ typedef struct {
     uint8_t fw_major, fw_minor, fw_patch;
 } hj20_telemetry_t;
 
+typedef struct {
+    uint16_t latched;     /* hj20_fault_bit_t mask                */
+    uint16_t first;       /* root-cause bit of this fault event   */
+    uint32_t time_ms;     /* uptime when the event was reported   */
+} hj20_fault_frame_t;
+
 typedef enum {
     HJ20_CAN_OK = 0,
     HJ20_CAN_ERR_ID = -1,      /* not addressed to this node / unknown */
@@ -81,5 +91,8 @@ hj20_can_status_t hj20_can_decode_cmd(uint8_t node, const hj20_can_frame_t *f, h
 
 void hj20_can_encode_telemetry(uint8_t node, const hj20_telemetry_t *t, hj20_can_frame_t *f);
 hj20_can_status_t hj20_can_decode_telemetry(uint8_t node, const hj20_can_frame_t *f, hj20_telemetry_t *t);
+
+void hj20_can_encode_fault(uint8_t node, const hj20_fault_frame_t *e, hj20_can_frame_t *f);
+hj20_can_status_t hj20_can_decode_fault(uint8_t node, const hj20_can_frame_t *f, hj20_fault_frame_t *e);
 
 #endif /* HJ20_CAN_PROTO_H */

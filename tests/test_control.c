@@ -120,6 +120,62 @@ static void disable_command_stops_torque(void)
     CHECK_NEAR(c.iq_ref, 0.0f, 0.0);
 }
 
+static void command_timeout_stops_torque(void)
+{
+    hj20_ctrl_t c;
+    ctrl_ready(&c);
+    hj20_slow_inputs_t si = slow_nominal(2);
+    hj20_ctrl_slow_tick(&c, &si);
+    send(&c, HJ20_MODE_TORQUE, 10000, 0);          /* last command at t = 2 ms */
+    for (uint32_t t = 3; t <= 2u + HJ20_CAN_CMD_TIMEOUT_MS; t++) {
+        si = slow_nominal(t);
+        hj20_ctrl_slow_tick(&c, &si);
+    }
+    CHECK(c.fault.state == HJ20_STATE_ENABLED);    /* exactly 100 ms: still ok */
+    si = slow_nominal(3u + HJ20_CAN_CMD_TIMEOUT_MS);
+    hj20_ctrl_slow_tick(&c, &si);
+    CHECK(c.fault.state == HJ20_STATE_FAULT);
+    CHECK((c.fault.latched & HJ20_FAULT_CAN_TIMEOUT) != 0u);
+    CHECK_NEAR(c.iq_ref, 0.0f, 0.0);
+}
+
+static void periodic_commands_keep_drive_enabled(void)
+{
+    hj20_ctrl_t c;
+    ctrl_ready(&c);
+    for (uint32_t t = 2; t < 2000; t++) {
+        if (t % 20u == 2u) {
+            send(&c, HJ20_MODE_TORQUE, 10000, 0);  /* 50 Hz host rate */
+        }
+        hj20_slow_inputs_t si = slow_nominal(t);
+        hj20_ctrl_slow_tick(&c, &si);
+    }
+    CHECK(c.fault.state == HJ20_STATE_ENABLED);
+}
+
+static void fault_event_reported_once(void)
+{
+    hj20_ctrl_t c;
+    ctrl_ready(&c);
+    send(&c, HJ20_MODE_TORQUE, 5000, 0);
+    hj20_can_frame_t f;
+    CHECK(!hj20_ctrl_take_fault_event(&c, &f));
+    hj20_fault_check_current(&c.fault, 0.0f, 16.0f, -16.0f);
+    CHECK(hj20_ctrl_take_fault_event(&c, &f));
+    CHECK(!hj20_ctrl_take_fault_event(&c, &f));   /* same event, no repeat */
+
+    hj20_fault_frame_t e;
+    CHECK(hj20_can_decode_fault(1, &f, &e) == HJ20_CAN_OK);
+    CHECK(e.first == HJ20_FAULT_OVER_CURRENT);
+
+    send(&c, HJ20_MODE_CLEAR_FAULTS, 0, 0);
+    CHECK(c.fault.state == HJ20_STATE_DISABLED);
+    CHECK(!hj20_ctrl_take_fault_event(&c, &f));
+    send(&c, HJ20_MODE_TORQUE, 5000, 0);
+    hj20_fault_check_current(&c.fault, 20.0f, 0.0f, 0.0f);
+    CHECK(hj20_ctrl_take_fault_event(&c, &f));    /* a new event is reported */
+}
+
 static void telemetry_reports_state_and_version(void)
 {
     hj20_ctrl_t c;
@@ -141,5 +197,8 @@ HJ20_SUITE(suite_control, "control",
     {TEST_NAME(REQ_OVER_CURRENT, "isr_disables_pwm_on_over_current"), isr_disables_pwm_on_over_current},
     {TEST_NAME(REQ_CURRENT_LOOP, "current_loop_drives_q_axis_voltage"), current_loop_drives_q_axis_voltage},
     {"test_control_disable_command_stops_torque", disable_command_stops_torque},
+    {TEST_NAME(REQ_CAN_TIMEOUT, "command_timeout_stops_torque"), command_timeout_stops_torque},
+    {TEST_NAME(REQ_CAN_TIMEOUT, "periodic_commands_keep_drive_enabled"), periodic_commands_keep_drive_enabled},
+    {TEST_NAME(REQ_CAN_FAULT_FRAME, "fault_event_reported_once"), fault_event_reported_once},
     {TEST_NAME(REQ_CAN_TELEMETRY, "telemetry_reports_state_and_version"), telemetry_reports_state_and_version},
 );

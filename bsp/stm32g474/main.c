@@ -3,7 +3,8 @@
  * @brief HJ-20 firmware entry point and interrupt wiring.
  *
  *   ADC1_2 (JEOS, 20 kHz)  -> hj20_ctrl_current_isr  -> TIM1 compare registers
- *   SysTick (1 kHz)        -> hj20_ctrl_slow_tick    (+ telemetry every 10 ms)
+ *   SysTick (1 kHz)        -> hj20_ctrl_slow_tick    (+ telemetry every 10 ms,
+ *                                                     FAULT frame on each new latch)
  *   FDCAN1 IT0 (RX FIFO0)  -> hj20_ctrl_on_can
  *   TIM1 BRK (nFAULT/OCP)  -> hardware already cut the gates; latch the fault
  */
@@ -57,6 +58,11 @@ void SysTick_Handler(void)
         .now_ms = now,
     };
     hj20_ctrl_slow_tick(&g_ctrl, &in);
+
+    hj20_can_frame_t ev;
+    if (hj20_ctrl_take_fault_event(&g_ctrl, &ev)) {
+        (void)board_can_send(&ev);
+    }
 
     if ((now % TELEMETRY_PERIOD_MS) == 0u) {
         hj20_can_frame_t f;

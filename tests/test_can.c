@@ -124,6 +124,26 @@ static void fd_dlc_mapping(void)
     }
 }
 
+static void fault_frame_round_trip(void)
+{
+    hj20_fault_frame_t in = {0x00A1u, 0x0001u, 123456789u};
+    hj20_can_frame_t f;
+    hj20_can_encode_fault(6, &in, &f);
+    CHECK(f.id == 0x086u);
+    CHECK(f.len == 8u);                      /* classic-CAN readable */
+    hj20_fault_frame_t out;
+    CHECK(hj20_can_decode_fault(6, &f, &out) == HJ20_CAN_OK);
+    CHECK(out.latched == in.latched && out.first == in.first && out.time_ms == in.time_ms);
+}
+
+static void fault_frame_wins_arbitration(void)
+{
+    /* For every node, its FAULT ID is lower (higher priority) than any COMMAND. */
+    for (uint32_t n = 1; n <= HJ20_CAN_NODE_MAX; n++) {
+        CHECK(HJ20_CAN_ID_FAULT_BASE + n < HJ20_CAN_ID_CMD_BASE + 1u);
+    }
+}
+
 HJ20_SUITE(suite_can, "can",
     {TEST_NAME(REQ_CAN_COMMAND, "command_round_trip"), command_round_trip},
     {TEST_NAME(REQ_CAN_COMMAND, "command_wire_format_little_endian"), command_wire_format_little_endian},
@@ -134,4 +154,6 @@ HJ20_SUITE(suite_can, "can",
     {TEST_NAME(REQ_CAN_COMMAND, "command_unknown_mode_rejected"), command_unknown_mode_rejected},
     {TEST_NAME(REQ_CAN_TELEMETRY, "telemetry_round_trip"), telemetry_round_trip},
     {"test_can_fd_dlc_mapping", fd_dlc_mapping},
+    {TEST_NAME(REQ_CAN_FAULT_FRAME, "fault_frame_round_trip"), fault_frame_round_trip},
+    {TEST_NAME(REQ_CAN_FAULT_FRAME, "fault_frame_wins_arbitration"), fault_frame_wins_arbitration},
 );
