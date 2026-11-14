@@ -25,6 +25,7 @@
 
 /* Torque and speed */
 #define REQ_TORQUE_LIMIT    "SRS_104"  /* 20 Nm rated / 50 Nm peak output torque limit  */
+#define REQ_TORQUE_DERATE   "SRS_105"  /* peak budget fold-back + thermal derating       */
 #define REQ_SPEED_LIMIT     "SRS_106"  /* output speed limited to 30 rpm                */
 
 /* Sensors */

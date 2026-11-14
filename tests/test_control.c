@@ -65,6 +65,17 @@ static void explicit_limit_allows_peak(void)
     CHECK_NEAR(c.torque_cmd_nm, 45.0f, 1e-3);
 }
 
+static void hot_power_stage_reduces_torque(void)
+{
+    hj20_ctrl_t c;
+    ctrl_ready(&c);
+    send(&c, HJ20_MODE_TORQUE, 40000, 50000);
+    hj20_slow_inputs_t si = slow_nominal(2);
+    si.temp_stage_c = 95.0f;                       /* half-way down the derate ramp */
+    hj20_ctrl_slow_tick(&c, &si);
+    CHECK_NEAR(c.torque_cmd_nm, 25.0f, 1e-3);
+}
+
 static void isr_disables_pwm_on_over_current(void)
 {
     hj20_ctrl_t c;
@@ -126,6 +137,7 @@ HJ20_SUITE(suite_control, "control",
     {TEST_NAME(REQ_TORQUE_LIMIT, "torque_command_maps_to_iq_reference"), torque_command_maps_to_iq_reference},
     {TEST_NAME(REQ_TORQUE_LIMIT, "default_limit_is_rated_torque"), default_limit_is_rated_torque},
     {TEST_NAME(REQ_TORQUE_LIMIT, "explicit_limit_allows_peak"), explicit_limit_allows_peak},
+    {TEST_NAME(REQ_TORQUE_DERATE, "hot_power_stage_reduces_torque"), hot_power_stage_reduces_torque},
     {TEST_NAME(REQ_OVER_CURRENT, "isr_disables_pwm_on_over_current"), isr_disables_pwm_on_over_current},
     {TEST_NAME(REQ_CURRENT_LOOP, "current_loop_drives_q_axis_voltage"), current_loop_drives_q_axis_voltage},
     {"test_control_disable_command_stops_torque", disable_command_stops_torque},

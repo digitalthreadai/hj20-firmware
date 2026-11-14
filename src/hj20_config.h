@@ -39,6 +39,16 @@
 /* ---- thermal ------------------------------------------------------------ */
 #define HJ20_TEMP_STAGE_TRIP_C        110.0f   /* MOSFET / board NTC          */
 #define HJ20_TEMP_MOTOR_TRIP_C        130.0f   /* winding NTC                 */
+#define HJ20_TEMP_STAGE_DERATE_START_C 85.0f   /* linear derate to zero ...    */
+#define HJ20_TEMP_STAGE_DERATE_END_C  105.0f   /* ... 5 degC below the trip    */
+#define HJ20_TEMP_MOTOR_DERATE_START_C 100.0f
+#define HJ20_TEMP_MOTOR_DERATE_END_C  125.0f
+
+/* ---- peak torque budget (I2t on output torque) ----------------------------- */
+#define HJ20_PEAK_DURATION_S          2.0f     /* 50 Nm allowed for 2 s from cold */
+/* (50^2 - 20^2) Nm^2 * 2 s = 4200 Nm^2 s of headroom above the continuous rating */
+#define HJ20_I2T_BUDGET_NM2S          ((HJ20_PEAK_TORQUE_NM * HJ20_PEAK_TORQUE_NM - HJ20_RATED_TORQUE_NM * HJ20_RATED_TORQUE_NM) * HJ20_PEAK_DURATION_S)
+#define HJ20_I2T_RELEASE_FRACTION     0.5f     /* re-arm peak below 50 % of budget */
 
 /* ---- sensors ------------------------------------------------------------ */
 #define HJ20_MOTOR_ENC_BITS           14       /* on-axis magnetic, SPI       */

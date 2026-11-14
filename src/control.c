@@ -2,7 +2,6 @@
 
 #include "fastmath.h"
 #include "hj20_config.h"
-#include "torque.h"
 
 /* Current-loop gains from the motor model: R = 0.45 ohm, L = 0.35 mH per
  * phase; pole-zero cancellation at ~2 kHz bandwidth: kp = wc*L, ki = R/L. */
@@ -26,6 +25,7 @@ void hj20_ctrl_init(hj20_ctrl_t *c, uint8_t node_id, float elec_offset_rad)
     hj20_fault_init(&c->fault);
     hj20_encoder_init(&c->enc, elec_offset_rad);
     hj20_motion_init(&c->motion);
+    hj20_derate_init(&c->derate);
     float vmax = hj20_svpwm_linear_limit(HJ20_VBUS_NOMINAL_V);
     hj20_pi_init(&c->pi_d, CUR_KP_V_PER_A, CUR_KI_V_PER_A_S, -vmax, vmax);
     hj20_pi_init(&c->pi_q, CUR_KP_V_PER_A, CUR_KI_V_PER_A_S, -vmax, vmax);
@@ -35,6 +35,7 @@ void hj20_ctrl_init(hj20_ctrl_t *c, uint8_t node_id, float elec_offset_rad)
     c->setpoint = 0.0f;
     c->torque_ff_nm = 0.0f;
     c->torque_limit_nm = HJ20_RATED_TORQUE_NM;
+    c->torque_limit_eff = HJ20_RATED_TORQUE_NM;
     c->iq_meas = 0.0f;
     c->vbus = 0.0f;
     c->temp_stage_c = 25.0f;
@@ -95,12 +96,17 @@ void hj20_ctrl_slow_tick(hj20_ctrl_t *c, const hj20_slow_inputs_t *in)
     };
     hj20_fault_evaluate(&c->fault, &fi);
 
+    /* Account for the torque applied over the last tick (zero when off),
+     * so the peak budget also recovers while the drive is disabled. */
+    c->torque_limit_eff = hj20_derate_limit(&c->derate, c->torque_limit_nm, c->torque_cmd_nm,
+                                            in->temp_stage_c, in->temp_motor_c, HJ20_SLOW_LOOP_DT_S);
+
     if (!hj20_fault_pwm_allowed(&c->fault)) {
         reset_loops(c);
         return;
     }
 
-    float limit = c->torque_limit_nm;
+    float limit = c->torque_limit_eff;
     float torque;
     switch (c->mode) {
     case HJ20_MODE_TORQUE:

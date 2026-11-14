@@ -21,6 +21,7 @@
 #include "foc.h"
 #include "motion.h"
 #include "pi.h"
+#include "torque.h"
 
 typedef struct {
     float ia, ib, ic;        /* A, from the DRV8353RS current-sense amplifiers */
@@ -49,13 +50,15 @@ typedef struct {
     hj20_encoder_t enc;
     hj20_motion_t motion;
     hj20_pi_t pi_d, pi_q;
+    hj20_derate_t derate;
 
     /* command (from CAN) */
     hj20_mode_t mode;
     uint8_t last_seq;
     float setpoint;          /* SI: Nm | rad/s | rad */
     float torque_ff_nm;
-    float torque_limit_nm;
+    float torque_limit_nm;   /* as commanded over CAN                    */
+    float torque_limit_eff;  /* after peak budget and thermal derating   */
 
     /* references for the current loop */
     volatile float id_ref, iq_ref;
