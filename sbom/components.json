@@ -1,0 +1,27 @@
+{
+  "product": "hj20-firmware",
+  "supplier": "Helix Robotics",
+  "license": "LicenseRef-Helix-Proprietary",
+  "copyright": "Copyright (c) 2026 Helix Robotics (fictional demonstration company, DigitalEng.ai). All rights reserved.",
+  "components": [
+    {
+      "name": "hj20-control-core",
+      "description": "Portable FOC, PI current/velocity/position loops, torque limiting, encoder handling and fault state machine",
+      "paths": ["src/fastmath.c", "src/foc.c", "src/pi.c", "src/motion.c", "src/torque.c", "src/encoder.c", "src/fault.c", "src/control.c"]
+    },
+    {
+      "name": "hj20-can-protocol",
+      "description": "CAN-FD application protocol codec (command, telemetry)",
+      "paths": ["src/can_proto.c", "src/can_proto.h"]
+    },
+    {
+      "name": "hj20-bsp-stm32g474",
+      "description": "STM32G474RE board support: startup, vector table, linker script, clocks, pin map, DRV8353RS driver",
+      "paths": ["bsp/stm32g474"]
+    }
+  ],
+  "notes": [
+    "The image links with -nostdlib: no newlib, no libgcc, no vendor HAL. No third-party code is linked.",
+    "The GNU Arm toolchain is a build tool only and is recorded in the SPDX creationInfo comment, not as a package."
+  ]
+}
