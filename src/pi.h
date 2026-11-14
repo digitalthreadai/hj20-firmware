@@ -16,7 +16,8 @@ typedef struct {
 void hj20_pi_init(hj20_pi_t *pi, float kp, float ki, float out_min, float out_max);
 void hj20_pi_reset(hj20_pi_t *pi);
 
-/** One controller step: returns the saturated output for error `err`. */
+/** One controller step: returns the saturated output for error `err`.
+ *  Anti-windup: conditional integration (integrator frozen while saturated). */
 float hj20_pi_step(hj20_pi_t *pi, float err, float dt);
 
 /**

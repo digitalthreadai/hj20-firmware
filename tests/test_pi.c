@@ -48,6 +48,44 @@ static void pi_integrator_bounded_under_saturation(void)
     CHECK(pi.integ <= 1.0f && pi.integ >= -1.0f);
 }
 
+static void pi_recovers_immediately_after_saturation(void)
+{
+    /* Long saturation with a large error (e.g. iq demand during a stall),
+     * then the error reverses: the output must reverse on the very next
+     * sample instead of riding a wound-up integrator. */
+    hj20_pi_t pi;
+    hj20_pi_init(&pi, 1.0f, 100.0f, -1.0f, 1.0f);
+    for (int k = 0; k < 1000; k++) {
+        CHECK_NEAR(hj20_pi_step(&pi, 5.0f, 1e-4f), 1.0f, 1e-6);
+    }
+    float u = hj20_pi_step(&pi, -0.5f, 1e-4f);
+    CHECK(u < 0.0f);
+}
+
+static void current_loop_overshoot_after_saturation(void)
+{
+    /* Bus sag clips the current loop for 5 ms; on release the current must
+     * not overshoot the reference by more than 10 %. */
+    hj20_pi_t pi;
+    hj20_pi_init(&pi, KP, KI, -2.0f, 2.0f);  /* 2 V: cannot reach 5 A */
+    const float dt = HJ20_CURRENT_LOOP_DT_S;
+    float i = 0.0f;
+    for (int k = 0; k < 100; k++) {
+        float v = hj20_pi_step(&pi, 5.0f - i, dt);
+        i += dt / L_H * (v - R_OHM * i);
+    }
+    pi.out_min = -25.0f;
+    pi.out_max = 25.0f;
+    float peak = 0.0f;
+    for (int k = 0; k < 200; k++) {
+        float v = hj20_pi_step(&pi, 5.0f - i, dt);
+        i += dt / L_H * (v - R_OHM * i);
+        if (i > peak) peak = i;
+    }
+    CHECK(peak < 5.5f);
+    CHECK_NEAR(i, 5.0f, 0.05f);
+}
+
 static void pi_reset_clears_integrator(void)
 {
     hj20_pi_t pi;
@@ -76,5 +114,7 @@ HJ20_SUITE(suite_pi, "pi",
     {TEST_NAME(REQ_CURRENT_LOOP, "output_respects_limits"), pi_output_respects_limits},
     {TEST_NAME(REQ_CURRENT_LOOP, "integrator_bounded_under_saturation"), pi_integrator_bounded_under_saturation},
     {TEST_NAME(REQ_CURRENT_LOOP, "voltage_vector_limit_prioritises_d_axis"), dq_limit_prioritises_d_axis},
+    {TEST_NAME(REQ_CURRENT_LOOP, "recovers_immediately_after_saturation"), pi_recovers_immediately_after_saturation},
+    {TEST_NAME(REQ_CURRENT_LOOP, "no_overshoot_after_voltage_saturation"), current_loop_overshoot_after_saturation},
     {"test_pi_reset_clears_integrator", pi_reset_clears_integrator},
 );
