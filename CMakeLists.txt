@@ -25,6 +25,8 @@ add_library(hj20_core STATIC
     src/pi.c
     src/motion.c
     src/torque.c
+    src/encoder.c
+    src/fault.c
 )
 target_include_directories(hj20_core PUBLIC src)
 target_compile_definitions(hj20_core PUBLIC
