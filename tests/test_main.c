@@ -12,9 +12,11 @@
 #include "hj20_test.h"
 
 extern const hj20_suite_t suite_foc;
+extern const hj20_suite_t suite_pi;
+extern const hj20_suite_t suite_torque;
 
 static const hj20_suite_t *const k_suites[] = {
-    &suite_foc,
+    &suite_foc, &suite_pi, &suite_torque,
 };
 #define N_SUITES (sizeof k_suites / sizeof k_suites[0])
 #define MAX_TESTS 256

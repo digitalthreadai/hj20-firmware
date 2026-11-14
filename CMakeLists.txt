@@ -22,6 +22,9 @@ endif()
 add_library(hj20_core STATIC
     src/fastmath.c
     src/foc.c
+    src/pi.c
+    src/motion.c
+    src/torque.c
 )
 target_include_directories(hj20_core PUBLIC src)
 target_compile_definitions(hj20_core PUBLIC
