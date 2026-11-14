@@ -10,8 +10,9 @@ and matches it against the requirement's spec id (`rec_id`) or item number.
 |---------------------|-------------|----------------------------------------------------------|-------|
 | `REQ_FOC_TRANSFORM` | SRS-101     | Clarke/Park transforms accurate to 1e-5                  | 5 |
 | `REQ_SVPWM`         | SRS-102     | SVPWM duty bounded; linear up to vbus/sqrt(3)            | 5 |
-| `REQ_CURRENT_LOOP`  | SRS-103     | dq current loop settles < 1 ms; anti-windup              | 5 |
+| `REQ_CURRENT_LOOP`  | SRS-103     | dq current loop settles < 1 ms; anti-windup              | 7 |
 | `REQ_TORQUE_LIMIT`  | SRS-104     | Output torque limited to 20 Nm rated / 50 Nm peak        | 8 |
+| `REQ_TORQUE_DERATE` | SRS-105     | Peak-torque budget fold-back and thermal derating        | 7 |
 | `REQ_SPEED_LIMIT`   | SRS-106     | Output speed limited to 30 rpm                           | 2 |
 | `REQ_ENCODER`       | SRS-110     | Output/motor encoder consistency monitored               | 3 |
 | `REQ_OVER_CURRENT`  | SRS-120     | Phase over-current trips within one PWM period           | 3 |
@@ -20,6 +21,8 @@ and matches it against the requirement's spec id (`rec_id`) or item number.
 | `REQ_FAULT_LATCH`   | SRS-123     | Faults latch until explicitly cleared                    | 4 |
 | `REQ_CAN_COMMAND`   | SRS-130     | CAN-FD command decode with range validation              | 7 |
 | `REQ_CAN_TELEMETRY` | SRS-131     | CAN-FD telemetry content and encoding                    | 2 |
+| `REQ_CAN_FAULT_FRAME` | SRS-132   | FAULT frame on every new latched fault                   | 3 |
+| `REQ_CAN_TIMEOUT`   | SRS-133     | Torque removed after 100 ms without a command            | 2 |
 
 Tests without a requirement macro (e.g. `test_encoder_counts_to_angle`) are
 unit-level checks and are intentionally not traced.

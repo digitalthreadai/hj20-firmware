@@ -7,6 +7,22 @@ requirements specification (see `tests/requirements-map.md`).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-14
+
+### Added
+- Peak-torque budget: 50 Nm for 2 s from cold, then fold-back to the 20 Nm
+  rating until half the budget has recovered (SRS-105).
+- Thermal derating: linear torque reduction from 85 degC (power stage) and
+  100 degC (winding), reaching zero before the over-temperature trips (SRS-105).
+- CAN-FD FAULT frame at 0x080 + node, sent once per latched fault event (SRS-132).
+- Host command watchdog: 100 ms without a COMMAND while enabled latches
+  CAN_TIMEOUT and removes torque (SRS-133).
+
+### Fixed
+- PI anti-windup: the integrator no longer charges while the output is
+  saturated, so the output reverses immediately when the error does
+  (previously it stayed pinned after a long saturation) (SRS-103).
+
 ## [0.1.0] - 2026-11-14
 
 First buildable skeleton: host-tested control core plus an STM32G474RE image

@@ -32,7 +32,7 @@ src/                  portable control core (C11, no HAL, no heap, no libc)
   foc.[ch]            Clarke / Park / inverse, SVPWM
   pi.[ch]             PI controller, dq voltage limiter
   motion.[ch]         velocity PI, position P (30 rpm clamp)
-  torque.[ch]         torque <-> iq, torque limits
+  torque.[ch]         torque <-> iq, torque limits, peak budget + thermal derating
   encoder.[ch]        motor + output encoders, consistency monitor
   fault.[ch]          drive state machine, latched faults
   can_proto.[ch]      CAN-FD frame codec
@@ -93,6 +93,7 @@ little-endian payloads. `node` is the joint address 1 to 15 (board straps).
 
 | ID            | Direction    | Bytes | Frame     |
 |---------------|--------------|-------|-----------|
+| 0x080 + node  | joint to host | 8    | FAULT (once per latched fault event) |
 | 0x100 + node  | host to joint | 16   | COMMAND   |
 | 0x180 + node  | joint to host | 32   | TELEMETRY (every 10 ms) |
 
@@ -100,6 +101,10 @@ COMMAND: `[0]` mode (0 disable, 1 torque, 2 velocity, 3 position, 4 clear
 faults), `[1]` sequence, `[4..7]` setpoint int32 (mNm, mrad/s or urad),
 `[8..11]` torque feed-forward int32 mNm, `[12..13]` torque limit uint16 mNm
 (0 = rated 20 Nm). Frames outside the actuator rating are rejected, not clamped.
+
+FAULT: `[0..1]` latched fault bits, `[2..3]` root-cause bit, `[4..7]` uptime
+ms. Eight bytes, so classic-CAN monitors can read it; its ID out-ranks every
+COMMAND.
 
 TELEMETRY: `[0]` state, `[1]` sequence echo, `[2..3]` latched fault bits,
 `[4..7]` output position urad, `[8..11]` velocity mrad/s, `[12..15]` torque
@@ -112,6 +117,8 @@ temperature 0.1 degC, `[24..27]` uptime ms, `[28..30]` firmware version.
 |-----------------------------|------------------|----------------------------|
 | Output torque, default      | 20 Nm            | clamp                      |
 | Output torque, ceiling      | 50 Nm            | clamp; CAN request > 50 Nm rejected |
+| Peak torque budget          | 50 Nm for 2 s    | fold back to 20 Nm, re-arm at 50 % budget |
+| Thermal derating            | 85-105 degC stage, 100-125 degC winding | linear torque reduction to zero |
 | Output speed                | 30 rpm           | clamp; CAN request rejected |
 | Phase current               | 15 A             | trip in one PWM period (latched) |
 | Bus over-voltage            | 58 V, 3 ms       | trip (latched)             |
@@ -120,6 +127,7 @@ temperature 0.1 degC, `[24..27]` uptime ms, `[28..30]` firmware version.
 | Winding temperature         | 130 degC, 50 ms  | trip (latched)             |
 | Encoder disagreement        | 0.5 deg + wind-up, 10 ms | trip (latched)     |
 | DRV8353RS nFAULT / OCP      | hardware         | TIM1 break cuts gates; fault latched |
+| Host command timeout        | 100 ms           | torque off (latched CAN_TIMEOUT) |
 
 A latched fault keeps the bridge off until a CLEAR command arrives **and**
 the cause is gone.
