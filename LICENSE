@@ -1,0 +1,12 @@
+Copyright (c) 2026 Helix Robotics (fictional demonstration company, DigitalEng.ai). All rights reserved.
+
+This repository and its contents are proprietary and confidential. No part of
+this software may be copied, modified, distributed, sublicensed or used, in
+source or binary form, without prior written permission of the copyright
+holder.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. THIS IS DEMONSTRATION FIRMWARE: IT HAS NOT BEEN QUALIFIED ON HARDWARE
+AND MUST NOT BE USED TO DRIVE A REAL MOTOR OR ROBOT.
+
+SPDX-License-Identifier: LicenseRef-Helix-Proprietary

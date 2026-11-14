@@ -1,0 +1,22 @@
+# CMake build trees
+build/
+build-*/
+out/
+
+# Toolchain outputs outside the build tree
+*.o
+*.elf
+*.bin
+*.hex
+*.map
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Local secrets never belong here
+.env
+.env.*
