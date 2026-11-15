@@ -198,4 +198,5 @@ jobs:
             "hj20-firmware-${GITHUB_REF_NAME}.bin" \
             "hj20-firmware-${GITHUB_REF_NAME}.elf" \
             hj20-firmware.spdx.json \
+            junit.xml \
             SHA256SUMS

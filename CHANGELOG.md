@@ -7,6 +7,12 @@ requirements specification (see `tests/requirements-map.md`).
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-14
+
+### Fixed
+- Release packaging: 0.2.1 downloaded the JUnit report but did not attach it
+  to the release. It is attached now. No functional change to the firmware.
+
 ## [0.2.1] - 2026-11-14
 
 ### Changed
